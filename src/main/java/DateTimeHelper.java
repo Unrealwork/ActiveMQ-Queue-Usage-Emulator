@@ -5,7 +5,6 @@ import java.util.Calendar;
  */
 public class DateTimeHelper {
     /**
-     *
      * @return how many seconds passed
      * from today's start
      */
