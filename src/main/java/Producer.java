@@ -14,9 +14,9 @@ public class Producer{
         return session;
     }
 
-    public Producer(Connection connection) throws JMSException {
+    public Producer(Connection connection,String queueName) throws JMSException {
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        destination = session.createQueue("queue-1");
+        destination = session.createQueue(queueName);
         producer = session.createProducer(destination);
         producer.setDeliveryMode(DeliveryMode.PERSISTENT);
     }

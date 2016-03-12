@@ -28,9 +28,9 @@ public class Consumer {
     }
 
 
-    public Consumer(Connection connection) throws JMSException {
+    public Consumer(Connection connection, String queueName) throws JMSException {
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        destination = session.createQueue("queue-1");
+        destination = session.createQueue(queueName);
         consumer = session.createConsumer(destination);
     }
 
