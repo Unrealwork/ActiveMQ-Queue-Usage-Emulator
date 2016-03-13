@@ -91,6 +91,7 @@ public class QueueUsageEmulator extends Thread {
         return new LoessInterpolator().interpolate(x, y);
     }
 
+    //TODO: refactor method generate InterpolateNodes()
     private HashMap<Integer, Integer> generateInterpolatedNodes() {
         Integer startDay = DateTimeHelper.hourToSeconds(0);
         Integer endDay = DateTimeHelper.hourToSeconds(24);
