@@ -1,1 +1,2 @@
-**ActiveMQ Queue Usage Emulator**
+**ActiveMQ queue usage emulator**
+---------------------------------
