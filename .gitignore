@@ -15,3 +15,6 @@ hs_err_pid*
 target
 
 # Created by .ignore support plugin (hsz.mobi)
+
+
+src/main/java/resoures/app.properties
