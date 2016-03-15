@@ -8,17 +8,17 @@ import java.util.Properties;
  */
 public class Application {
     public static void main(String[] args) {
+        Application app = new Application();
         try {
             /*
             Get data from properties file
              */
-
-            String connectionurl = System.getProperty("connectionurl");
-            String username = System.getProperty("user");
-            String password = System.getProperty("password");
-            String queueName = System.getProperty("queue");
-            System.out.println(connectionurl);
-            Long interval = Long.parseLong(System.getProperty("interval"));
+            Properties props = app.getProperties("app.properties");
+            String connectionurl = props.getProperty("connectionurl");
+            String username = props.getProperty("user");
+            String password = props.getProperty("password");
+            String queueName = props.getProperty("queue");
+            Long interval = Long.parseLong(props.getProperty("interval"));
             new QueueUsageEmulator(
                     new WorkDay(),
                     queueName,
@@ -37,12 +37,12 @@ public class Application {
     public Properties getProperties(String fileName) {
         Properties props = new Properties();
         InputStream is = null;
-        try{
+        try {
             is = getClass().getResourceAsStream(fileName);
             props.load(is);
         } catch (IOException e) {
-            s
+            e.printStackTrace();
         }
-
+        return props;
     }
 }
