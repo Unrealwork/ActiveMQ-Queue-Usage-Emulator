@@ -19,9 +19,11 @@ public class QueueUsageEmulator extends Thread {
     private Timer producedTimer, consumerTimer, interpolateTimer;
     private Connection connection;
     private WorkDay workDay;
+    private Long interval;
 
 
-    public QueueUsageEmulator(WorkDay workDay, String queueName, String serverURI, String user, String password) throws Exception {
+    public QueueUsageEmulator(WorkDay workDay, String queueName, String serverURI, String user, String password, Long interval) throws Exception {
+        this.interval = interval;
         this.workDay = workDay;
         ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(user, password, serverURI/*"tcp://hbs.axibase.com:5022"*/);
         connection = connectionFactory.createConnection();
@@ -32,24 +34,28 @@ public class QueueUsageEmulator extends Thread {
         function = generateInterpolator();
         producedTimer = new Timer();
         consumerTimer = new Timer();
+        interpolateTimer = new Timer();
     }
 
     private class ProducerTask extends TimerTask {
 
         @Override
         public void run() {
-            try {
-                Long currentQueueSize = consumer.getQueueSize();
-                Integer currentTime = DateTimeHelper.getSecondsOfToday();
-                Long preferredQueueSize = Math.round(function.value(currentTime));
-                logger.l7dlog(Priority.INFO, "Producer : preferredQueueSize: " + preferredQueueSize + "; currentQueueSize: " + currentQueueSize + ";", null);
-                while (currentQueueSize < preferredQueueSize) {
-                    producer.sendMessage("message");
-                    currentQueueSize++;
+            if (function != null) {
+                try {
+                    Long currentQueueSize = consumer.getQueueSize();
+                    Integer currentTime = DateTimeHelper.getSecondsOfToday();
+                    Long preferredQueueSize = Math.round(function.value(currentTime));
+                    logger.l7dlog(Priority.INFO, "Producer : preferredQueueSize: " + preferredQueueSize + "; currentQueueSize: " + currentQueueSize + ";", null);
+                    while (currentQueueSize < preferredQueueSize) {
+                        producer.sendMessage("message");
+                        currentQueueSize++;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+
         }
     }
 
@@ -59,17 +65,19 @@ public class QueueUsageEmulator extends Thread {
 
         @Override
         public void run() {
-            try {
-                Long currentQueueSize = consumer.getQueueSize();
-                Integer currentTime = DateTimeHelper.getSecondsOfToday();
-                Long preferredQueueSize = Math.round(function.value(currentTime));
-                logger.l7dlog(Priority.INFO, "Consumer : preferredQueueSize: " + preferredQueueSize + "; currentQueueSize: " + currentQueueSize + ";", null);
-                while (currentQueueSize > preferredQueueSize) {
-                    consumer.receiveMessage();
-                    currentQueueSize--;
+            if (function != null) {
+                try {
+                    Long currentQueueSize = consumer.getQueueSize();
+                    Integer currentTime = DateTimeHelper.getSecondsOfToday();
+                    Long preferredQueueSize = Math.round(function.value(currentTime));
+                    logger.l7dlog(Priority.INFO, "Consumer : preferredQueueSize: " + preferredQueueSize + "; currentQueueSize: " + currentQueueSize + ";", null);
+                    while (currentQueueSize > preferredQueueSize) {
+                        consumer.receiveMessage();
+                        currentQueueSize--;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         }
     }
@@ -139,11 +147,18 @@ public class QueueUsageEmulator extends Thread {
         return result;
     }
 
+    private class InterpolateTask extends TimerTask {
+        @Override
+        public void run() {
+            function = generateInterpolator();
+        }
+    }
+
     @Override
     public void run() {
-        Integer delay = 2 * 1000;
-        producedTimer.schedule(new ProducerTask(), new Date(), delay);
-        consumerTimer.schedule(new ConsumerTask(), new Date(System.currentTimeMillis() + delay / 2), delay);
+        interpolateTimer.schedule(new InterpolateTask(), DateTimeHelper.getNextMidnight(), 24 * 60 * 60 * 100L);
+        producedTimer.schedule(new ProducerTask(), new Date(), interval);
+        consumerTimer.schedule(new ConsumerTask(), new Date(System.currentTimeMillis() + interval / 2), interval);
     }
 
     @Override

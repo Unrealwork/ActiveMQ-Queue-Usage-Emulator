@@ -8,9 +8,11 @@ public class Application {
         try {
             new QueueUsageEmulator(
                     new WorkDay(),
-                    "queue-2", "tcp://hbs.axibase.com:5022",
+                    "queue-2",
+                    "tcp://hbs.axibase.com:5022",
                     "admin",
-                    null)
+                    null,
+                    2000L)
                     .start();
         } catch (JMSException e) {
             e.printStackTrace();
