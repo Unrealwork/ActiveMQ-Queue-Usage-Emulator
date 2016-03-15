@@ -6,7 +6,12 @@ import javax.jms.JMSException;
 public class Application {
     public static void main(String[] args) {
         try {
-            new QueueUsageEmulator().start();
+            new QueueUsageEmulator(
+                    new WorkDay(),
+                    "queue-2", "tcp://hbs.axibase.com:5022",
+                    "admin",
+                    null)
+                    .start();
         } catch (JMSException e) {
             e.printStackTrace();
         } catch (Exception e) {

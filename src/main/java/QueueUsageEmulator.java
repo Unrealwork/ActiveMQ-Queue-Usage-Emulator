@@ -18,13 +18,14 @@ public class QueueUsageEmulator extends Thread {
     private Logger logger = Logger.getLogger(QueueUsageEmulator.class);
     private Timer producedTimer, consumerTimer, interpolateTimer;
     private Connection connection;
+    private WorkDay workDay;
 
 
-    public QueueUsageEmulator() throws Exception {
-        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("admin", null, "tcp://hbs.axibase.com:5022");
+    public QueueUsageEmulator(WorkDay workDay, String queueName, String serverURI, String user, String password) throws Exception {
+        this.workDay = workDay;
+        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(user, password, serverURI/*"tcp://hbs.axibase.com:5022"*/);
         connection = connectionFactory.createConnection();
         connection.start();
-        String queueName = "queue-2";
         consumer = new Consumer(connection, queueName);
         producer = new Producer(connection, queueName);
         logger.l7dlog(Priority.INFO, "Creating of interpolate function", null);
@@ -53,9 +54,7 @@ public class QueueUsageEmulator extends Thread {
     }
 
 
-
     private class ConsumerTask extends TimerTask {
-
 
 
         @Override
@@ -76,7 +75,7 @@ public class QueueUsageEmulator extends Thread {
     }
 
     private PolynomialSplineFunction generateInterpolator() {
-        HashMap<Integer, Integer> interpolatedNodes = generateInterpolatedNodes();
+        HashMap<Integer, Integer> interpolatedNodes = generateInterpolatedNodes(workDay, 600);
         double[] x = new double[interpolatedNodes.size()];
         double[] y = new double[interpolatedNodes.size()];
         Integer[] times = new Integer[interpolatedNodes.size()];
@@ -91,15 +90,19 @@ public class QueueUsageEmulator extends Thread {
         return new LoessInterpolator().interpolate(x, y);
     }
 
-    private HashMap<Integer, Integer> generateInterpolatedNodes() {
-        Integer startDay = DateTimeHelper.hourToSeconds(0);
-        Integer endDay = DateTimeHelper.hourToSeconds(24);
-        Integer workBeginTime = DateTimeHelper.hourToSeconds(8);
-        Integer lunchBeginTime = DateTimeHelper.hourToSeconds(12);
-        Integer lunchEndTime = DateTimeHelper.hourToSeconds(13);
-        Integer workEndTime = DateTimeHelper.hourToSeconds(18);
+
+    /**
+     * @param workDay
+     * @return
+     */
+    private HashMap<Integer, Integer> generateInterpolatedNodes(WorkDay workDay, Integer delta) {
+        Integer startDay = workDay.getStartDay();
+        Integer endDay = workDay.getEndDay();
+        Integer workBeginTime = workDay.getWorkBeginTime();
+        Integer lunchBeginTime = workDay.getLunchBeginTime();
+        Integer lunchEndTime = workDay.getLunchEndTime();
+        Integer workEndTime = workDay.getWorkEndTime();
         HashMap<Integer, Integer> result = new HashMap<Integer, Integer>();
-        Integer delta = 600;
         for (Integer time = startDay; time < workBeginTime; time += delta) {
             Integer randomTime = time += new Random().nextInt(delta) - delta / 2;
             if (!(randomTime < 0 || randomTime > workBeginTime)) {
@@ -110,7 +113,7 @@ public class QueueUsageEmulator extends Thread {
             Integer randomTime = time += new Random().nextInt(delta) - delta / 2;
             if (!(randomTime < workBeginTime || randomTime > lunchBeginTime)) {
                 Double part = ((randomTime - workBeginTime) * 1.0) / (lunchBeginTime - workBeginTime);
-                Integer limit = (int) Math.round(part*90);
+                Integer limit = (int) Math.round(part * 90);
                 Integer randomQueueSize = limit + new Random().nextInt(20);
                 result.put(randomTime, randomQueueSize);
             }
@@ -121,7 +124,7 @@ public class QueueUsageEmulator extends Thread {
             Integer randomTime = time += new Random().nextInt(delta) - delta / 2;
             if (!(randomTime < lunchEndTime || randomTime > workEndTime)) {
                 Double part = 1 - ((randomTime - lunchEndTime) * 1.0) / (workEndTime - lunchEndTime);
-                Integer limit = (int) Math.round(part*90);
+                Integer limit = (int) Math.round(part * 90);
                 Integer randomQueueSize = limit + new Random().nextInt(20);
                 result.put(randomTime, randomQueueSize);
             }

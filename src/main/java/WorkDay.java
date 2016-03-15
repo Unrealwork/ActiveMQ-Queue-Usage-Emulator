@@ -19,6 +19,16 @@ public class WorkDay {
     }
 
 
+    public WorkDay(Integer workBeginTime, Integer lunchBeginTime, Integer lunchEndTime, Integer workEndTime) {
+        startDay = DateTimeHelper.hourToSeconds(0);
+        endDay = DateTimeHelper.hourToSeconds(24);
+        this.workBeginTime = workBeginTime;
+        this.lunchBeginTime = lunchBeginTime;
+        this.lunchEndTime = lunchEndTime;
+        this.workEndTime = workEndTime;
+    }
+
+
     public Integer getStartDay() {
         return startDay;
     }
