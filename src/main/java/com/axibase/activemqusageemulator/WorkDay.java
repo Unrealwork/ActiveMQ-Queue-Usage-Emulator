@@ -1,3 +1,7 @@
+package com.axibase.activemqusageemulator;
+
+import com.axibase.activemqusageemulator.tools.DateTimeHelper;
+
 /**
  * Created by shmagrinsky on 12.03.16.
  */
