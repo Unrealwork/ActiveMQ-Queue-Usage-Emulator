@@ -27,8 +27,7 @@ public class Application {
             if (args != null && args.length > 1 && args[0].equals("-conf")) {
                 proprertiesFileUrl = args[1];
             } else {
-                proprertiesFileUrl = Application.class.getResourceAsStream(RESOURCES_PROPERTY_URL).toString();
-                LOG.info(proprertiesFileUrl);
+                proprertiesFileUrl = null;
             }
             new ActiveMQueueBalancer(getProperties(proprertiesFileUrl)).start();
         } catch (JMSException e) {
@@ -40,7 +39,8 @@ public class Application {
 
     public static Properties getProperties(String fileName) throws FileNotFoundException {
         Properties props = new Properties();
-        InputStream is = new FileInputStream(fileName);
+        InputStream is = (fileName != null) ? new FileInputStream(fileName) : Application.class.getClassLoader().getResourceAsStream(
+                RESOURCES_PROPERTY_URL);
         try {
             props.load(is);
         } catch (IOException e) {
